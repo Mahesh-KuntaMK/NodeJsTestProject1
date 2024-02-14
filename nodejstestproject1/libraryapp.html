@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management page</title>
+    
+    <style>
+       *{
+        margin: 0px;
+       }
+       .header{
+        display: none;
+        font-size: 15px;
+       }
+      
+        .bg-container{
+            display: flex;
+            flex-direction: column;
+        }
+        .display{
+            display:flex;
+            flex-direction: row;
+            width: 500px;
+            justify-content: space-between;
+        }
+       
+        .form-container{
+        
+        display: flex;
+        background-color:azure;
+        border:3px solid grey;
+        align-self: left;
+        flex-direction: column;
+        padding: 40px;
+        font-size: 20px;
+        }
+        .return-container{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            width:100%;
+          
+        }
+
+        .book-container{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            width:100%;
+          
+        }
+        .card{
+            margin: 5px;
+            padding: 20px;
+            font-size: 15px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="bg-container">
+        <div class="form-container">  
+              <h1>BOOK</h1>
+             <form onsubmit="register(event)" class="form">
+                <input style="font-size: 20px;" type="text" placeholder="enter the book name" id="bookname">
+                <button type="submit" style="font-size: 20px;">ADD</button>
+             </form>     
+        </div>
+        <div class="book-container">
+            
+        </div>
+        <div class="header">
+            <h1>Returned Books</h1>
+        </div>
+        <div class="return-container">
+                
+        </div>
+    </div>
+
+
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded',()=>{
+            axios.get('http://localhost:3000/getbooks')
+            .then(data=>{
+                for(let i=0;i<data.data.length;i++){
+                    display(data.data[i])
+                }
+            }).catch(err=>{
+                console.log(err)
+            })
+            axios.get('http://localhost:3000/returnbooks')
+            .then(data=>{
+                for(let i=0;i<data.data.length;i++){
+                    displayreturnbooks(data.data[i])
+                }
+            })
+            .catch(err=>{
+                console.log(err)
+            })
+        })
+
+
+        function register(event){
+            event.preventDefault();
+            const bookname=event.target.bookname.value;
+            const bookontime=new Date();
+
+            const booktakentime=new Date();
+
+           
+            const returnbooktime=booktakentime.setHours(booktakentime.getHours()+1);
+            const returntime=new Date(returnbooktime)
+            console.log(returntime)
+            const fees=0;
+
+            const obj={
+                bookname:bookname,
+                booktakentime:bookontime,
+                returnbooktime:returntime,
+                fees:fees
+            }
+            axios.post('http://localhost:3000/postbook',obj)
+            .then(data=>{
+                console.log(data.date,'post')
+                display(data.data)
+            })
+           
+        }
+        function display(data){
+            const bookcontainer=document.querySelector('.book-container')
+            const bookcard=document.createElement('div');
+            bookcard.classList.add('card');
+            bookcard.setAttribute('id',`${data.id}`);
+            
+            bookcard.innerHTML=`<li id=1>Book Name:${data.bookname}</li>
+            <li >Time:${data.booktakentime}</li>
+            <li >Fee:${data.fees}</li>
+            <li >Due Date:${data.returnbooktime}</li>
+            <button onclick="returnbook('${data.id}')">Return Book</button>`
+            bookcontainer.appendChild(bookcard)
+        }
+        function returnbook(id){
+            
+           
+            axios.get(`http://localhost:3000/returnbook/${id}`)
+            .then(data=>{
+              console.log(data.data);
+              console.log(data.data.id)
+              
+             deletebook(data.data.id);
+           axios.post('http://localhost:3000/returnbooks',data.data)
+           .then(data=>{
+             console.log(data)
+            const header=document.querySelector('.header');
+            header.style.display='block'
+            //console.log(bookname,booktakentime,fees,returntime)
+            const returncontainer=document.querySelector('.return-container')
+            const returncard=document.createElement('div');
+            returncard.classList.add('card');
+            returncard.setAttribute('id',`${data.data.id}`);
+            returncard.innerHTML=`<li>Book Name:${data.data.bookname}</li>
+
+           
+            <li >Fee:${data.data.fees}</li>
+            <li >Retunred Date:${data.data.returneddate}</li>
+            `
+            returncontainer.appendChild(returncard)
+            })
+        })
+           
+        }
+            
+        function deletebook(id){
+            console.log(id)
+            const bookcontainer=document.querySelector('.book-container')
+            const returnbook=document.getElementById(`${id}`)
+            console.log(returnbook)
+            if(returnbook){
+                bookcontainer.removeChild(returnbook)
+            }   
+        }
+        function displayreturnbooks(data){
+           
+            const header=document.querySelector('.header');
+            header.style.display='block'
+            //console.log(bookname,booktakentime,fees,returntime)
+            const returncontainer=document.querySelector('.return-container')
+            const returncard=document.createElement('div');
+            returncard.classList.add('card');
+            returncard.setAttribute('id',`${data.id}`);
+            returncard.innerHTML=`<li>Book Name:${data.bookname}</li>
+           
+            <li >Fee:${data.fees}</li>
+            `
+            returncontainer.appendChild(returncard)
+            
+        }
+        
+    </script>
+</body>
+</html>
